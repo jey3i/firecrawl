@@ -16,10 +16,18 @@ FROM base AS build
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
+
+# Install certificates
 RUN apt-get update -qq && apt-get install -y ca-certificates && update-ca-certificates
-RUN pnpm install
-RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-    bash -c 'export SENTRY_AUTH_TOKEN="$(cat /run/secrets/SENTRY_AUTH_TOKEN)"; if [ -z "$SENTRY_AUTH_TOKEN" ]; then pnpm run build:nosentry; else pnpm run build; fi'
+
+# Build the application
+# Remove the unsupported secret mount and adjust the build command
+ARG SENTRY_AUTH_TOKEN
+RUN if [ -z "$SENTRY_AUTH_TOKEN" ]; then \
+        pnpm run build:nosentry; \
+    else \
+        pnpm run build; \
+    fi
 
 # Build Go shared library
 FROM golang:1.19 AS go-build

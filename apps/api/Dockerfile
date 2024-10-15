@@ -7,10 +7,12 @@ COPY . /app
 WORKDIR /app
 
 FROM base AS prod-deps
-RUN --mount=type=cache,id=prod-deps-pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
+RUN --mount=type=cache,target=/pnpm/store \
+    pnpm install --prod --frozen-lockfile
 
 FROM base AS build
-RUN --mount=type=cache,id=build-pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 RUN apt-get update -qq && apt-get install -y ca-certificates && update-ca-certificates
 RUN pnpm install
